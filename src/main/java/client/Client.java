@@ -1,23 +1,27 @@
+package client;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Arrays;
 
 public class Client {
-    public static void main(String[] args) throws IOException {
+    static Logger logger = LoggerFactory.getLogger(Client.class);
 
-        File file = new File("C:\\Users\\Dhinesh Kannan\\IdeaProjects\\httpserver\\src\\main\\resources\\index.html");
+    public static void main(String[] args) {
+
+        File file = new File( Client.class.getClassLoader().getResourceAsStream("index.html").toString());
 
         try {
-            Socket s = new Socket("localhost", 8080);
-            System.out.println("[CONNECTED]");
+            Socket s = new Socket("localhost", 8070);
+            logger.info("[CONNECTED]");
 
             DataInputStream in = new DataInputStream(s.getInputStream());
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String header = "GET / HTTP/1.0\r\n" + file
+//            BufferedReader br = new BufferedReader(new FileReader(file));
+            String header = "GET / HTTP/1.0\r\n" + file+" hlo all"
                     + "Host:localhost\r\n\r\n";
             byte[] byteHeader = header.getBytes();
-
             DataOutputStream dos = new DataOutputStream(s.getOutputStream());
             dos.write(byteHeader, 0, header.length());
             dos.writeUTF(header);
@@ -25,24 +29,23 @@ public class Client {
 
             byte[] buf = new byte[in.available()];
             in.readFully(buf);
-            System.out.println("\t[READ PROCESS]");
-            System.out.println("\t\tbuff length->" + buf.length);
+            logger.info("\t[READ PROCESS]");
+            logger.info("\t\tbuff length->" + buf.length);
             for (byte b : buf) {
                 res += (char) b;
             }
-            System.out.println("\t[/READ PROCESS]");
+            logger.info("\t[/READ PROCESS]");
 
 
-            System.out.println("[RES]");
-            System.out.println(res);
-            System.out.println("[CONN CLOSE]");
+            logger.info("[RES]");
+            logger.info(res);
+            logger.info("[CONN CLOSE]");
 
             in.close();
             dos.close();
             s.close();
-        }
-        catch (Exception e){
-            System.err.println(e);
+        } catch (Exception e) {
+            logger.warn(String.valueOf(e));
         }
     }
 }
