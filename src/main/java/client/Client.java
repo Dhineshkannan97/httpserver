@@ -1,6 +1,8 @@
 package client;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
@@ -8,7 +10,7 @@ import java.net.Socket;
 public class Client {
     static Logger logger = LoggerFactory.getLogger(Client.class);
 
-    public static void main(String[] args) {
+    public void clientConnection() {
 
         try {
             String si = "Hlo From Client";

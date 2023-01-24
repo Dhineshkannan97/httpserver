@@ -1,6 +1,8 @@
 package server;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -11,9 +13,10 @@ import java.util.Date;
 
 public class HttpHandler extends Thread {
     static Logger logger = LoggerFactory.getLogger(Server.class);
-    Socket clientSocket ;
-    public HttpHandler(Socket clientSocket){
-        this.clientSocket=clientSocket;
+    Socket clientSocket;
+
+    public HttpHandler(Socket clientSocket) {
+        this.clientSocket = clientSocket;
     }
 
     @Override
@@ -49,8 +52,7 @@ public class HttpHandler extends Thread {
             out.print("\n");
             out.print(sb);
             out.flush();
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             logger.warn(String.valueOf(e));
         }
     }

@@ -9,6 +9,7 @@ public class Server {
     static Logger logger = LoggerFactory.getLogger(Server.class);
 
     public void getConnections(ServerSocket serverSocket) {
+        while (true){
         try {
             Socket clientSocket = serverSocket.accept();
             Thread thread = new HttpHandler(clientSocket);
@@ -19,16 +20,8 @@ public class Server {
             throw new RuntimeException(e);
         }
     }
+    }
 
-    public static void main(String[] args) throws IOException {
-
-        ServerSocket serverSocket = new ServerSocket(8070);
-        System.out.println("server start");
-        logger.info("\u001B[34m" + "server started" + "\u001B[0m");
-        while (true) {
-            Server obj = new Server();
-            obj.getConnections(serverSocket);
-        }
 
     }
-}
+
