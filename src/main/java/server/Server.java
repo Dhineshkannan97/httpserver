@@ -15,6 +15,7 @@ public class Server {
             Thread thread = new HttpHandler(clientSocket);
             thread.start();
 
+
         } catch (IOException e) {
             logger.warn("\u001B[31m" + e);
             throw new RuntimeException(e);

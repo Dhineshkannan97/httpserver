@@ -8,7 +8,7 @@ import java.net.ServerSocket;
 public class Main {
     static Logger logger = LoggerFactory.getLogger(Server.class);
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
 
         ServerSocket serverSocket = new ServerSocket(8070);
         System.out.println("server start");
@@ -17,6 +17,5 @@ public class Main {
         client.clientConnection();
         Server server = new Server();
         server.getConnections(serverSocket);
-        Thread.sleep(5000);
     }
 }
