@@ -2,13 +2,16 @@ package server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.net.Socket;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.StringTokenizer;
 
 public class HttpHandler extends Thread {
+
+//    Instant scheduledTime = Instant.now();
     static Logger logger = LoggerFactory.getLogger(Server.class);
     static final boolean verbose = true;
     static final File WEB_ROOT = new File("C:\\Users\\Dhinesh Kannan\\Documents\\Streams\\httpserver\\src\\main\\resources");
@@ -17,13 +20,13 @@ public class HttpHandler extends Thread {
     static final String METHOD_NOT_SUPPORTED = "not_supported.html";
     Socket clientSocket;
 
-
     public HttpHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
     }
 
     @Override
     public void run() {
+        Instant startTime = Instant.now();
         BufferedReader in = null;
         PrintWriter out = null;
         BufferedOutputStream dataOut = null;
@@ -60,7 +63,7 @@ public class HttpHandler extends Thread {
 
                 // we send HTTP Headers with data to client
                 out.println("HTTP/1.1 501 Not Implemented");
-                out.println("Server: Java HTTP Server from SSaurel : 1.0");
+                out.println("Server: Java HTTP Server from S : 1.0");
                 out.println("Date: " + new Date());
                 out.println("Content-type: " + contentMimeType);
                 out.println("Content-length: " + fileLength);
@@ -116,7 +119,7 @@ public class HttpHandler extends Thread {
                 in.close();
                 out.close();
                 dataOut.close();
-//                clientSocket.close(); // we close socket connection
+                clientSocket.close(); // we close socket connection
             } catch (Exception e) {
                 System.err.println("Error closing stream : " + e.getMessage());
             }
@@ -125,6 +128,10 @@ public class HttpHandler extends Thread {
                 System.out.println("Connection closed.\n");
             }
         }
+
+        Instant endTime = Instant.now();
+        Duration actualDelay = Duration.between(startTime, endTime);
+        logger.info(" actual delay: " + actualDelay.toMillis() + " milliseconds.");
 
     }
 

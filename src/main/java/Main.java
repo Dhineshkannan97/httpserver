@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 public class Main {
-    static Logger logger = LoggerFactory.getLogger(Server.class);
+    static Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws IOException {
 
