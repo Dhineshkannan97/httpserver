@@ -2,6 +2,7 @@ package server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.net.Socket;
 import java.time.Duration;
@@ -11,9 +12,11 @@ import java.util.StringTokenizer;
 
 public class HttpHandler extends Thread {
 
-//    Instant scheduledTime = Instant.now();
+    //    Instant scheduledTime = Instant.now();
     static Logger logger = LoggerFactory.getLogger(Server.class);
     static final boolean verbose = true;
+    //    String basePath = System.getProperty("punchline.html");
+//    File WEB_ROOT = new File(basePath + "/src/main/resources");
     static final File WEB_ROOT = new File("C:\\Users\\Dhinesh Kannan\\Documents\\Streams\\httpserver\\src\\main\\resources");
     static final String DEFAULT_FILE = "punchline.html";
     static final String FILE_NOT_FOUND = "404.html";
@@ -33,76 +36,71 @@ public class HttpHandler extends Thread {
         String fileRequested = null;
 
         try {
-
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
             out = new PrintWriter(clientSocket.getOutputStream());
-
             dataOut = new BufferedOutputStream(clientSocket.getOutputStream());
 
+            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+//            = in.readLine();
+            String input;
+            while ((input = in.readLine()) != null) {
+                StringTokenizer parse = new StringTokenizer(input);
+                String method = parse.nextToken().toUpperCase(); // we get the HTTP method of the client
+                System.out.println(method);
+                fileRequested = parse.nextToken().toLowerCase();
+                System.out.println(fileRequested);
+                if (!method.equals("GET") && !method.equals("HEAD")) {
+                    if (verbose) {
+                        logger.info("501 Not Implemented : " + method + " method.");
+                    }
+                    File file = new File(WEB_ROOT, METHOD_NOT_SUPPORTED);
+                    int fileLength = (int) file.length();
+                    String contentMimeType = "text/html";
 
-            String input = in.readLine();
-
-            StringTokenizer parse = new StringTokenizer(input);
-            String method = parse.nextToken().toUpperCase(); // we get the HTTP method of the client
-
-            fileRequested = parse.nextToken().toLowerCase();
-
-
-            if (!method.equals("GET") && !method.equals("HEAD")) {
-                if (verbose) {
-                    logger.info("501 Not Implemented : " + method + " method.");
-                }
-
-
-                File file = new File(WEB_ROOT, METHOD_NOT_SUPPORTED);
-                int fileLength = (int) file.length();
-                String contentMimeType = "text/html";
-
-                byte[] fileData = readFileData(file, fileLength);
-
-                // we send HTTP Headers with data to client
-                out.println("HTTP/1.1 501 Not Implemented");
-                out.println("Server: Java HTTP Server from S : 1.0");
-                out.println("Date: " + new Date());
-                out.println("Content-type: " + contentMimeType);
-                out.println("Content-length: " + fileLength);
-                out.println(); // blank line between headers and content, very important !
-                out.flush(); // flush character output stream buffer
-                // file
-                dataOut.write(fileData, 0, fileLength);
-                dataOut.flush();
-
-            } else {
-                // GET or HEAD method
-                if (fileRequested.endsWith("/")) {
-                    fileRequested += DEFAULT_FILE;
-                }
-
-                File file = new File(WEB_ROOT, fileRequested);
-                int fileLength = (int) file.length();
-                String content = getContentType(fileRequested);
-
-                if (method.equals("GET")) { // GET method so we return content
                     byte[] fileData = readFileData(file, fileLength);
 
-                    // send HTTP Headers
-                    out.println("HTTP/1.1 200 OK");
-                    out.println("Server: Java HTTP Server from Dhinesh : 1.0");
+                    // we send HTTP Headers with data to client
+                    out.println("HTTP/1.1 501 Not Implemented");
+                    out.println("Server: Java HTTP Server from S : 1.0");
                     out.println("Date: " + new Date());
-                    out.println("Content-type: " + content);
+                    out.println("Content-type: " + contentMimeType);
                     out.println("Content-length: " + fileLength);
                     out.println(); // blank line between headers and content, very important !
                     out.flush(); // flush character output stream buffer
-
+                    // file
                     dataOut.write(fileData, 0, fileLength);
                     dataOut.flush();
-                }
 
-                if (verbose) {
-                    System.out.println("File " + fileRequested + " of type " + content + " returned");
-                }
+                } else {
+                    // GET or HEAD method
+                    if (fileRequested.endsWith("/")) {
+                        fileRequested += DEFAULT_FILE;
+                    }
 
+                    File file = new File(WEB_ROOT, fileRequested);
+                    int fileLength = (int) file.length();
+                    String content = getContentType(fileRequested);
+
+                    if (method.equals("GET")) { // GET method so we return content
+                        byte[] fileData = readFileData(file, fileLength);
+
+                        // send HTTP Headers
+                        out.println("HTTP/1.1 200 OK");
+                        out.println("Server: Java HTTP Server from Dhinesh : 1.0");
+                        out.println("Date: " + new Date());
+                        out.println("Content-type: " + content);
+                        out.println("Content-length: " + fileLength);
+                        out.println(); // blank line between headers and content, very important !
+                        out.flush(); // flush character output stream buffer
+
+                        dataOut.write(fileData, 0, fileLength);
+                        dataOut.flush();
+                    }
+
+                    if (verbose) {
+                        System.out.println("File " + fileRequested + " of type " + content + " returned");
+                    }
+
+                }
             }
 
         } catch (FileNotFoundException fnfe) {
@@ -132,7 +130,6 @@ public class HttpHandler extends Thread {
         Instant endTime = Instant.now();
         Duration actualDelay = Duration.between(startTime, endTime);
         logger.info(" actual delay: " + actualDelay.toMillis() + " milliseconds.");
-
     }
 
     private byte[] readFileData(File file, int fileLength) throws IOException {
