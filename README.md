@@ -1,6 +1,8 @@
 # httpserver
-
-use this dependency for logger
+Introduction
+This is a Java code for web server.
+Running the code
+   use this dependency for logger
 <dependencies>
 <dependency>
 <groupId>org.slf4j</groupId>
