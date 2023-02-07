@@ -30,28 +30,22 @@ public class HttpHandler extends Thread {
     @Override
     public void run() {
         Instant startTime = Instant.now();
-        BufferedReader in = null;
-        PrintWriter out = null;
-        BufferedOutputStream dataOut = null;
-        String fileRequested = null;
-
+        BufferedReader inStream = null;
+        PrintWriter outStream = null;
+        BufferedOutputStream dataOutStream = null;
+//        String requestedFile = null;
         try {
-            out = new PrintWriter(clientSocket.getOutputStream());
-            dataOut = new BufferedOutputStream(clientSocket.getOutputStream());
+            outStream = new PrintWriter(clientSocket.getOutputStream());
+            dataOutStream = new BufferedOutputStream(clientSocket.getOutputStream());
 
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-//            = in.readLine();
+            inStream = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             String input;
-            while ((input = in.readLine()) != null) {
-                StringTokenizer parse = new StringTokenizer(input);
-                String method = parse.nextToken().toUpperCase(); // we get the HTTP method of the client
-                System.out.println(method);
-                fileRequested = parse.nextToken().toLowerCase();
-                System.out.println(fileRequested);
+            while (((input = inStream.readLine()) != null) && !(input.isEmpty())) {
+
+                String[] request = parseRequestLine(input);
+                String method = request[0];
+                String requestedFile = request[1];
                 if (!method.equals("GET") && !method.equals("HEAD")) {
-                    if (verbose) {
-                        logger.info("501 Not Implemented : " + method + " method.");
-                    }
                     File file = new File(WEB_ROOT, METHOD_NOT_SUPPORTED);
                     int fileLength = (int) file.length();
                     String contentMimeType = "text/html";
@@ -59,75 +53,78 @@ public class HttpHandler extends Thread {
                     byte[] fileData = readFileData(file, fileLength);
 
                     // we send HTTP Headers with data to client
-                    out.println("HTTP/1.1 501 Not Implemented");
-                    out.println("Server: Java HTTP Server from S : 1.0");
-                    out.println("Date: " + new Date());
-                    out.println("Content-type: " + contentMimeType);
-                    out.println("Content-length: " + fileLength);
-                    out.println(); // blank line between headers and content, very important !
-                    out.flush(); // flush character output stream buffer
+                    outStream.println("HTTP/1.1 501 Not Implemented");
+                    outStream.println("Server: Java HTTP Server from S : 1.0");
+                    outStream.println("Date: " + new Date());
+                    outStream.println("Content-type: " + contentMimeType);
+                    outStream.println("Content-length: " + fileLength);
+                    outStream.println(); // blank line between headers and content, very important !
+                    outStream.flush(); // flush character output stream buffer
                     // file
-                    dataOut.write(fileData, 0, fileLength);
-                    dataOut.flush();
+                    dataOutStream.write(fileData, 0, fileLength);
+                    dataOutStream.flush();
 
                 } else {
                     // GET or HEAD method
-                    if (fileRequested.endsWith("/")) {
-                        fileRequested += DEFAULT_FILE;
+                    if (requestedFile.endsWith("/")) {
+                        requestedFile += DEFAULT_FILE;
                     }
 
-                    File file = new File(WEB_ROOT, fileRequested);
+                    File file = new File(WEB_ROOT, requestedFile);
                     int fileLength = (int) file.length();
-                    String content = getContentType(fileRequested);
+                    String content = getContentType(requestedFile);
 
                     if (method.equals("GET")) { // GET method so we return content
                         byte[] fileData = readFileData(file, fileLength);
 
                         // send HTTP Headers
-                        out.println("HTTP/1.1 200 OK");
-                        out.println("Server: Java HTTP Server from Dhinesh : 1.0");
-                        out.println("Date: " + new Date());
-                        out.println("Content-type: " + content);
-                        out.println("Content-length: " + fileLength);
-                        out.println(); // blank line between headers and content, very important !
-                        out.flush(); // flush character output stream buffer
+                        outStream.println("HTTP/1.1 200 OK");
+                        outStream.println("Server: Java HTTP Server from Dhinesh : 1.0");
+                        outStream.println("Date: " + new Date());
+                        outStream.println("Content-type: " + content);
+                        outStream.println("Content-length: " + fileLength);
+                        outStream.println(); // blank line between headers and content, very important !
+                        outStream.flush(); // flush character output stream buffer
 
-                        dataOut.write(fileData, 0, fileLength);
-                        dataOut.flush();
+                        dataOutStream.write(fileData, 0, fileLength);
+                        dataOutStream.flush();
                     }
 
                     if (verbose) {
-                        System.out.println("File " + fileRequested + " of type " + content + " returned");
+                        System.out.println("File " + requestedFile + " of type " + content + " returned");
                     }
 
+                }
+                if (input.contains("GET")) {
+                    break;
                 }
             }
 
         } catch (FileNotFoundException fnfe) {
             try {
-                fileNotFound(out, dataOut, fileRequested);
+                fileNotFound(outStream, dataOutStream);
             } catch (IOException ioe) {
                 logger.warn("Error with file not found exception : " + ioe.getMessage());
+                logger.info("File not found");
+
             }
 
         } catch (IOException ioe) {
             logger.warn("Server error : " + ioe);
         } finally {
             try {
-                in.close();
-                out.close();
-                dataOut.close();
+                inStream.close();
+                outStream.close();
+                dataOutStream.close();
                 clientSocket.close(); // we close socket connection
             } catch (Exception e) {
                 System.err.println("Error closing stream : " + e.getMessage());
             }
 
-            if (verbose) {
-                System.out.println("Connection closed.\n");
-            }
         }
 
         Instant endTime = Instant.now();
+        System.out.println(endTime.toString());
         Duration actualDelay = Duration.between(startTime, endTime);
         logger.info(" actual delay: " + actualDelay.toMillis() + " milliseconds.");
     }
@@ -155,7 +152,14 @@ public class HttpHandler extends Thread {
             return "text/plain";
     }
 
-    private void fileNotFound(PrintWriter out, OutputStream dataOut, String fileRequested) throws IOException {
+    private String[] parseRequestLine(String requestLine) {
+        StringTokenizer parse = new StringTokenizer(requestLine);
+        String method = parse.nextToken().toUpperCase();
+        String requestedFile = parse.nextToken().toLowerCase();
+        return new String[]{method, requestedFile};
+    }
+
+    private void fileNotFound(PrintWriter out, OutputStream dataOut) throws IOException {
         File file = new File(WEB_ROOT, FILE_NOT_FOUND);
         int fileLength = (int) file.length();
         String content = "text/html";
@@ -170,10 +174,6 @@ public class HttpHandler extends Thread {
         out.flush();
         dataOut.write(fileData, 0, fileLength);
         dataOut.flush();
-
-        if (verbose) {
-            logger.info("File " + fileRequested + " not found");
-        }
     }
 
 }
